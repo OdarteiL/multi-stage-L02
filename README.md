@@ -24,6 +24,14 @@ Shrink a bloated ~1.2GB Node.js container image to under 120MB using multi-stage
 
 ![Dive Layer Analysis](screenshots/dive.png)
 
+### Vulnerability Scan with Trivy
+
+![Trivy Scan 1](screenshots/trivy_scan_1.png)
+
+![Trivy Scan 2](screenshots/trivy_scan_2.png)
+
+![Trivy Scan 3](screenshots/trivy_scan_3.png)
+
 ---
 
 ## What Was Done
