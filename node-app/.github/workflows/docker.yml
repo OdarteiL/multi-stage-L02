@@ -1,0 +1,74 @@
+name: Build, Scan & Push
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        # Buildx enables BuildKit features (cache mounts, multi-platform, etc.)
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          # GITHUB_TOKEN is auto-provided by Actions — no manual secret needed
+
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false          # build only, don't push yet (scan first)
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha  # use GitHub Actions cache for layers
+          cache-to: type=gha,mode=max
+          load: true            # load into local Docker daemon for scanning
+
+      - name: Check image size (regression gate)
+        run: |
+          SIZE=$(docker inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            --format='{{.Size}}')
+          MAX_SIZE=$((120 * 1024 * 1024))  # 120MB in bytes
+          echo "Image size: $((SIZE / 1024 / 1024))MB"
+          if [ "$SIZE" -gt "$MAX_SIZE" ]; then
+            echo "❌ Image exceeds 120MB size limit!"
+            exit 1
+          fi
+          echo "✅ Image size is within limit"
+
+      - name: Scan with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          format: table
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+
+      - name: Push to GHCR
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

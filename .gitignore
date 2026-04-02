@@ -1,0 +1,4 @@
+node_modules/
+*.deb
+.env
+npm-debug.log

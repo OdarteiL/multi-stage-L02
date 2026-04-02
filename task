@@ -1,0 +1,27 @@
+LAB 02 — Multi-Stage Docker Build Optimization Lab 
+
+ 
+
+Shrink container image sizes by up to 90% using advanced Dockerfile patterns 
+
+Difficulty 
+
+Intermediate 
+
+Estimated Time 
+
+3–5 hours 
+
+Tools Required 
+
+Docker, dive, Trivy, GitHub Actions, GHCR 
+
+ 
+
+Overview 
+
+Start with a bloated 1.2GB Node.js application image and systematically reduce it to under 120MB using multi-stage builds, distroless base images, BuildKit cache mounts, and proper .dockerignore configuration. Then automate size regression detection and vulnerability scanning in CI. 
+
+WHY THIS MATTERS IN 2025 
+
+Image bloat costs real money in registry storage and pod startup latency. At scale, a 1GB versus 100MB image means minutes of additional pod startup time during traffic spikes. Multi-stage builds and image optimization are common interview questions at FAANG-tier companies. 
